@@ -33,9 +33,9 @@ reboot
 # Install TOP DIALER scripts
 
 ```
-cd /usr/src/vicidial-install-scripts
-git clone https://github.com/carpenox/vicidial-install-scripts.git
-cd vicidial-install-scripts
+cd /usr/src/
+git clone https://github.com/daccadtop/topdialer.git
+cd topdialer
 ```
 
 # Alma/Rocky 9 Installer TOP DIALER GUI, SSL Cert and Asterisk 11
@@ -69,7 +69,7 @@ Make sure you update your SSL cert location in /etc/httpd/conf.d/viciportal-ssl.
 # Install a default database with everything setup ready to go
 
 ```
-cd /usr/src/vicidial-install-scripts
+cd /usr/src/topdialer
 chmod +x standard-db.sh
 ./standard-db.sh
 ```
@@ -78,7 +78,7 @@ chmod +x standard-db.sh
 # DO THIS IF YOU HAVE PUBLIC DOMAIN WITH PUBLIC IP ONLY
 
 ```
-cd /usr/src/vicidial-install-scripts
+cd /usr/src/topdialer
 chmod +x vicidial-enable-webrtc.sh
 ./vicidial-enable-webrtc.sh
 ```
