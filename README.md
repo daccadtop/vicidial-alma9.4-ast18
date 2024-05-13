@@ -74,7 +74,7 @@ chmod +x standard-db.sh
 ./standard-db.sh
 ```
 
-# Install Webphone and SSL cert for VICIDIAL
+# Install Webphone and SSL cert for TOP DIALER
 # DO THIS IF YOU HAVE PUBLIC DOMAIN WITH PUBLIC IP ONLY
 
 ```
