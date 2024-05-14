@@ -208,12 +208,14 @@ ldconfig
 #Install Dahdi
 echo "Install Dahdi"
 ln -sf /usr/lib/modules/$(uname -r)/vmlinux.xz /boot/
+mkdir /etc/include
 cp /usr/src/topdialer/newt.h /etc/include/
 
 cd /usr/src/
 mkdir dahdi-linux-complete-3.2.0+3.2.0
 cd dahdi-linux-complete-3.2.0+3.2.0
-cp /usr/src/topdialer/dahdi-alma9.zip /usr/src/dahdi-linux-complete-3.2.0+3.2.0/
+#cp /usr/src/topdialer/dahdi-alma9.zip /usr/src/dahdi-linux-complete-3.2.0+3.2.0/
+wget https://namd.topdialer.solutions/dahdi-alma9.zip
 unzip dahdi-alma9.zip
 yum in newt* -y
 
@@ -779,7 +781,7 @@ systemctl enable certbot-renew.timer
 systemctl start certbot-renew.timer
 cd /usr/src/topdialer
 chmod +x vicidial-enable-webrtc.sh
-#service firewalld stop
+service firewalld stop
 ./vicidial-enable-webrtc.sh
 #service firewalld start
 #systemctl enable firewalld
