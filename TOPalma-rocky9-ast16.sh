@@ -755,7 +755,7 @@ chmod +x vicidial-enable-webrtc.sh
 service firewalld stop
 ./vicidial-enable-webrtc.sh
 #service firewalld start
-systemctl enable firewalld
+systemctl disable firewalld
 systemctl enable rc-local
 
 mv /etc/httpd/conf.d/viciportal-ssl.conf /etc/httpd/conf.d/viciportal-ssl.conf.off
