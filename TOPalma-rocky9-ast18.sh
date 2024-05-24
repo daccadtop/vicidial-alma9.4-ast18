@@ -215,8 +215,8 @@ cd /usr/src/
 mkdir dahdi-linux-complete-3.2.0+3.2.0
 cd dahdi-linux-complete-3.2.0+3.2.0
 #cp /usr/src/topdialer/dahdi-alma9.zip /usr/src/dahdi-linux-complete-3.2.0+3.2.0/
-wget https://namd.topdialer.solutions/dahdi-alma9.zip
-unzip dahdi-alma9.zip
+wget https://namd.topdialer.solutions/dahdi-alma9-4.tar.gz
+tar -xzf dahdi-alma9-4.tar.gz
 yum in newt* -y
 
 sudo sed -i 's|(netdev, \&wc->napi, \&wctc4xxp_poll, 64);|(netdev, \&wc->napi, \&wctc4xxp_poll);|g' /usr/src/dahdi-linux-complete-3.2.0+3.2.0/linux/drivers/dahdi/wctc4xxp/base.c
