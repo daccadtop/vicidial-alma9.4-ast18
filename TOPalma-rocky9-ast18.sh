@@ -788,7 +788,18 @@ service firewalld stop
 systemctl disable firewalld
 
 ##ConfBridge Setup
-./vicidial-enable-confbridge.sh
+##./vicidial-enable-confbridge.sh
+
+tee -a /etc/asterisk/manager.conf <<EOF
+
+[confcron]
+secret = 1234
+read = command,reporting
+write = command,reporting
+
+eventfilter=Event: Meetme
+eventfilter=Event: Confbridge
+EOF
 
 chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
