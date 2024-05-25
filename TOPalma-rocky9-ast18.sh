@@ -329,7 +329,7 @@ SET GLOBAL connect_timeout=60;
 use asterisk;
 \. /usr/src/astguiclient/trunk/extras/MySQL_AST_CREATE_tables.sql
 \. /usr/src/astguiclient/trunk/extras/first_server_install.sql
-update servers set asterisk_version='16.30.0';
+update servers set asterisk_version='18.18.1';
 quit
 MYSQLCREOF
 
@@ -376,12 +376,13 @@ VARDB_port => 3306
 #  7 - AST_VDauto_dial_FILL (only for multi-server, this must only be on one server)
 #  8 - ip_relay (used for blind agent monitoring)
 #  9 - Timeclock auto logout
+#  C - ConfBridge process, (see the ConfBridge documentation for more info)
 #  E - Email processor, (If multi-server system, this must only be on one server)
 #  S - SIP Logger (Patched Asterisk 13 required)
 VARactive_keepalives => 12345689EC
 
 # Asterisk version VICIDIAL is installed for
-VARasterisk_version => 16.X
+VARasterisk_version => 18.X
 
 # FTP recording archive connection information
 VARFTP_host => 10.0.0.4
@@ -785,6 +786,9 @@ service firewalld stop
 ./vicidial-enable-webrtc.sh
 #service firewalld start
 systemctl disable firewalld
+
+##ConfBridge Setup
+./vicidial-enable-confbridge.sh
 
 chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
