@@ -45,4 +45,10 @@ EOF
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/vicidial/non_agent_api.php
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/admin/non_agent_api.php
 
+echo "%%%%%%%%%%%%%%%Please Enter Mysql Password Or Just Press Enter if you Dont have Password%%%%%%%%%%%%%%%%%%%%%%%%%%"
+mysql -u root -p << MYSQLCREOF
+use asterisk;
+\. /usr/src/topdialer/confbridges.sql
+quit
+MYSQLCREOF
 
