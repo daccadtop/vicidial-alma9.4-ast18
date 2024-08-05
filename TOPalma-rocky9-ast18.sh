@@ -622,11 +622,12 @@ systemctl start rc-local
 ##Install TOP DIALER GUI
 cd /var/www/html
 mv favicon.ico faviconBK.icoBK
+mv index.html index.BKhtml
 wget https://topt.topdialer.solutions/autoinstall/topdialergui.tar.gz
 #cp /usr/src/topdialer/topdialergui.tar.gz /var/www/html/
 tar -xzf topdialergui.tar.gz
-chmod -R 744 admin agents dashboard auth favicon.ico
-chown -R apache:apache admin agents dashboard auth favicon.ico
+chmod -R 744 admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
+chown -R apache:apache admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
 
 ##Install Dynamic firewall
 cd /home/
