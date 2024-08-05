@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Vicidial installation AlmaLinux/RockyLinux"
+echo "TOP DIALER installation AlmaLinux/RockyLinux"
 
 export LC_ALL=C
 
