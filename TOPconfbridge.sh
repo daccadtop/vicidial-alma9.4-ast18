@@ -40,8 +40,6 @@ eventfilter=Event: Meetme
 eventfilter=Event: Confbridge
 EOF
 
-
-
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/vicidial/non_agent_api.php
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/admin/non_agent_api.php
 
@@ -52,3 +50,4 @@ use asterisk;
 quit
 MYSQLCREOF
 
+/usr/share/astguiclient/ADMIN_update_server_ip.pl –-old-server_ip=10.10.10.17
