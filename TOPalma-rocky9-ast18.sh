@@ -215,7 +215,7 @@ cd /usr/src/
 mkdir dahdi-linux-complete-3.2.0+3.2.0
 cd dahdi-linux-complete-3.2.0+3.2.0
 #cp /usr/src/topdialer/dahdi-alma9.zip /usr/src/dahdi-linux-complete-3.2.0+3.2.0/
-wget https://topt.topdialer.solutions/autoinstall/dahdi-alma9-4.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/dahdi-alma9-4.tar.gz
 tar -xzf dahdi-alma9-4.tar.gz
 yum in newt* -y
 
@@ -623,7 +623,7 @@ systemctl start rc-local
 cd /var/www/html
 mv favicon.ico faviconBK.icoBK
 mv index.html index.BKhtml
-wget https://topt.topdialer.solutions/autoinstall/topdialergui.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/topdialergui.tar.gz
 #cp /usr/src/topdialer/topdialergui.tar.gz /var/www/html/
 tar -xzf topdialergui.tar.gz
 chmod -R 744 admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
@@ -632,7 +632,7 @@ chown -R apache:apache admin agents auth dashboard favicon.ico index.html p_logi
 ##Install Dynamic firewall
 cd /home/
 #cp /usr/src/topdialer/topfirewall.tar.gz /home/
-wget https://topt.topdialer.solutions/autoinstall/topfirewall.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
 tar -xzf topfirewall.tar.gz
 
 ##Fix ip_relay
