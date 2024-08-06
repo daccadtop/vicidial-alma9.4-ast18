@@ -29,19 +29,11 @@ patch -p0 < manager_send.php.diff
 patch -p0 < vdc_db_query.php.diff
 patch -p0 < vicidial.php.diff
 
-tee -a /etc/asterisk/manager.conf <<EOF
-
-[confcron]
-secret = 1234
-read = command,reporting
-write = command,reporting
-
-eventfilter=Event: Meetme
-eventfilter=Event: Confbridge
-EOF
-
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/vicidial/non_agent_api.php
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/admin/non_agent_api.php
+
+mv /var/www/html/agents/agents.php /var/www/html/agents/BKagents.php
+mv /var/www/html/agents/agentsCB.php /var/www/html/agents/agents.php
 
 echo "%%%%%%%%%%%%%%%Please Enter Mysql Password Or Just Press Enter if you Dont have Password%%%%%%%%%%%%%%%%%%%%%%%%%%"
 mysql -u root -p << MYSQLCREOF
