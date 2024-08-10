@@ -30,7 +30,9 @@ patch -p0 < vdc_db_query.php.diff
 patch -p0 < vicidial.php.diff
 
 sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/vicidial/non_agent_api.php
-sed -i 's|vicidial_conferences|vicidial_confbridges|g' /var/www/html/admin/non_agent_api.php
+mv /var/www/html/admin/non_agent_api.php /var/www/html/admin/BKnon_agent_api.php
+cp /var/www/html/vicidial/non_agent_api.php /var/www/html/admin/
+chown apache:apache /var/www/html/admin/non_agent_api.php
 
 mv /var/www/html/agents/agents.php /var/www/html/agents/BKagents.php
 mv /var/www/html/agents/agentsCB.php /var/www/html/agents/agents.php
