@@ -15,6 +15,13 @@ tee -a /etc/asterisk/confbridge.conf <<EOF
 #include confbridge-vicidial.conf
 EOF
 
+tee -a /etc/asterisk/modules.conf <<EOF
+
+noload => res_timing_timerfd.so
+noload => res_timing_kqueue.so
+noload => res_timing_pthread.so
+EOF
+
 cd /usr/src/astguiclient/trunk/extras/ConfBridge/
 cp * /usr/share/astguiclient/
 cd /usr/share/astguiclient/
