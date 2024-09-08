@@ -430,7 +430,7 @@ echo "Replace OLD IP. You need to Enter your Current IP here"
 /usr/share/astguiclient/ADMIN_update_server_ip.pl --old-server_ip=10.10.10.15
 
 
-perl install.pl --no-prompt
+perl install.pl
 
 
 #Install Crontab
