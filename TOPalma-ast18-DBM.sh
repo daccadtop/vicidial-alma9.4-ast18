@@ -668,8 +668,8 @@ systemctl daemon-reload
 sudo systemctl enable rc-local.service
 sudo systemctl start rc-local.service
 
-cat <<WELCOME>> /var/www/html/index.html
 #HERETOP <META HTTP-EQUIV=REFRESH CONTENT="1; URL=/admin/main.php">
+cat <<WELCOME>> /var/www/html/index.html
 <META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
 WELCOME
 
@@ -717,6 +717,8 @@ COMMENT
 
 chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
+sudo systemctl stop httpd
+sudo systemctl disable httpd
 
 read -p 'Press Enter to Reboot: '
 
