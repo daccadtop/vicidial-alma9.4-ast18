@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "TOP DIALER installation AlmaLinux/Ast18/MAIN DB ONLY"
+echo "TOP DIALER installation AlmaLinux/Ast18/WEB ONLY"
 
 export LC_ALL=C
 
