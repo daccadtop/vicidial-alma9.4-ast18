@@ -213,7 +213,8 @@ cd /usr/src/
 mkdir dahdi-linux-complete-3.2.0+3.2.0
 cd dahdi-linux-complete-3.2.0+3.2.0
 #cp /usr/src/topdialer/dahdi-alma9.zip /usr/src/dahdi-linux-complete-3.2.0+3.2.0/
-wget https://topt.topdialer.solutions:8080/autoinstall/dahdi-alma9-4.tar.gz
+#wget https://topt.topdialer.solutions:8080/autoinstall/dahdi-alma9-4.tar.gz
+wget http://10.7.78.25/autoinstall/dahdi-alma9-4.tar.gz
 tar -xzf dahdi-alma9-4.tar.gz
 yum in newt* -y
 
@@ -436,7 +437,8 @@ perl install.pl
 #Install Crontab
 
 cd /usr/src/topdialer
-wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
+#wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
+wget http://10.7.78.25/autoinstall/crons.tar.gz
 tar -xzf crons.tar.gz
 touch /root/crontab-file
 cat allcron > /root/crontab-file
@@ -522,7 +524,8 @@ systemctl start rc-local
 ##Install Dynamic firewall
 cd /home/
 #cp /usr/src/topdialer/topfirewall.tar.gz /home/
-wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
+#wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
+wget http://10.7.78.25/autoinstall/topfirewall.tar.gz
 tar -xzf topfirewall.tar.gz
 
 ##Fix ip_relay
