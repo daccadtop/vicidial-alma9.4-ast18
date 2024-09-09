@@ -495,11 +495,11 @@ wget http://10.7.78.25/autoinstall/topdialergui.tar.gz
 tar -xzf topdialergui.tar.gz
 chmod -R 744 admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
 chown -R apache:apache admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
-fi
+else
 cat <<WELCOME>> /var/www/html/index.html
 <META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
 WELCOME
-else
+fi
 
 ##Install Dynamic firewall
 cd /home/
