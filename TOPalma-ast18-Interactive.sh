@@ -392,7 +392,7 @@ cd /usr/src/topdialer
 #wget https://topt.topdialer.solutions:8080/autoinstall/astgui.tar.gz
 wget http://10.7.78.25/autoinstall/astgui.tar.gz
 tar -xzf astgui.tar.gz
-cp astguiclient.conf > /etc/astguiclient.conf
+cp astguiclient.conf /etc/astguiclient.conf
 
 echo "Replace Default parameters"
 sed -i s/MAINDBIP/"$LOCAL_IP"/g /etc/astguiclient.conf
@@ -404,6 +404,7 @@ sed -i s/CDBPASS/"$db_custom_password"/g /etc/astguiclient.conf
 sed -i s/DBPORT/"$db_port"/g /etc/astguiclient.conf
 
 echo "Install VICIDIAL"
+cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
 #Secure Manager 
@@ -417,35 +418,21 @@ echo "Replace OLD IP. You need to Enter your Current IP here"
 /usr/share/astguiclient/ADMIN_update_server_ip.pl --auto --old-server_ip=10.10.10.15 --server_ip=$LOCAL_IP
 
 #Install Crontab
-if [[ "$SS_INSTALL" == "y" ]]; then
+if [[ "$USE_DATABASE" == "y" || "$USE_TELEPHONY" == "y" ]]; then
 cd /usr/src/topdialer
 #wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
 wget http://10.7.78.25/autoinstall/crons.tar.gz
 tar -xzf crons.tar.gz
 touch /root/crontab-file
 cat allcron > /root/crontab-file
-cat dbcron >> /root/crontab-file
-cat dialcron >> /root/crontab-file
-else
+fi
 if [[ "$USE_DATABASE" == "y" ]]; then
-cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
-wget http://10.7.78.25/autoinstall/crons.tar.gz
-tar -xzf crons.tar.gz
-touch /root/crontab-file
-cat allcron > /root/crontab-file
 cat dbcron >> /root/crontab-file
 fi
-if [[ "$USE_DATABASE" != "y" && "$USE_TELEPHONY" == "y" ]]; then
-cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
-wget http://10.7.78.25/autoinstall/crons.tar.gz
-tar -xzf crons.tar.gz
-touch /root/crontab-file
-cat allcron > /root/crontab-file
+if [[ "$USE_TELEPHONY" == "y" ]]; then
 cat dialcron >> /root/crontab-file
 fi
-fi
+
 crontab /root/crontab-file
 crontab -l
 
@@ -460,7 +447,7 @@ cat rc.local >> /etc/rc.d/rc.local
 #Adjust rc.local as needed
 # Perform actions based on the enabled services
 # When USE_TELEPHONY is not true
-if [ "$USE_TELEPHONY" != true ]; then
+if [ "$USE_TELEPHONY" != "y" ]; then
     echo "Disabling telephony-related services."
     sudo sed -i 's|modprobe dahdi|### modprobe dahdi|g' /etc/rc.d/rc.local
     sudo sed -i 's|modprobe dahdi_dummy|### modprobe dahdi_dummy|g' /etc/rc.d/rc.local
@@ -470,12 +457,12 @@ if [ "$USE_TELEPHONY" != true ]; then
     sudo sed -i 's|/usr/share/astguiclient/AST_reset_mysql_vars.pl|### /usr/share/astguiclient/AST_reset_mysql_vars.pl|g' /etc/rc.d/rc.local
 fi
 # When USE_DATABASE is not true
-if [ "$USE_DATABASE" != true ]; then
+if [ "$USE_DATABASE" != "y" ]; then
     echo "Disabling database-related services."
     sudo sed -i 's|systemctl start mariadb.service|### systemctl start mariadb.service|g' /etc/rc.d/rc.local
 fi
 # When USE_WEB is not true
-if [ "$USE_WEB" != true ]; then
+if [ "$USE_WEB" != "y" ]; then
     echo "Disabling web server-related services."
     sudo sed -i 's|systemctl start httpd.service|### systemctl start httpd.service|g' /etc/rc.d/rc.local
 fi
@@ -611,13 +598,13 @@ tee -a ~/.bashrc <<EOF
 EOF
 # Perform actions based on the enabled services
 # When USE_TELEPHONY is not true
-if [ "$USE_TELEPHONY" != true ]; then
+if [ "$USE_TELEPHONY" != "y" ]; then
     echo "Disabling telephony-related services."
     sudo sed -i 's|/usr/sbin/dahdi_cfg|### /usr/sbin/dahdi_cfg|g' ~/.bashrc
     sudo sed -i 's|/usr/sbin/asterisk|### /usr/sbin/asterisk|g' ~/.bashrc
 fi
 # When USE_WEB is not true
-if [ "$USE_WEB" != true ]; then
+if [ "$USE_WEB" != "y" ]; then
     echo "Disabling web server-related services."
     sudo sed -i 's|/usr/bin/systemctl status http|### /usr/bin/systemctl status http|g' ~/.bashrc
 fi
@@ -701,19 +688,19 @@ chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
 # Perform actions based on the enabled services
 # When USE_TELEPHONY is not true
-if [ "$USE_TELEPHONY" != true ]; then
+if [ "$USE_TELEPHONY" != "y" ]; then
     echo "Disabling telephony-related services."
     sudo systemctl stop asterisk
     sudo systemctl disable asterisk
 fi
 # When USE_WEB is not true
-if [ "$USE_WEB" != true ]; then
+if [ "$USE_WEB" != "y" ]; then
     echo "Disabling web server-related services."
     sudo systemctl stop httpd
     sudo systemctl disable httpd
 fi
 # When USE_DATABASE is not true
-if [ "$USE_DATABASE" != true ]; then
+if [ "$USE_DATABASE" != "y" ]; then
     echo "Disabling web server-related services."
     sudo systemctl stop mariadb
     sudo systemctl disable mariadb
