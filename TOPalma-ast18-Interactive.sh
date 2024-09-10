@@ -79,12 +79,19 @@ USE_WEB=$(ask_yes_no "Will this server be used as a Web server?" "y")
 
 # Question 5
 USE_TELEPHONY=$(ask_yes_no "Will this server be used as a Telephony server?" "y")
+if [[ $USE_TELEPHONY == "y" ]]; then
+        FIRST_TELEPHONY=$(ask_yes_no "Is this your Telephony server?" "y")
+fi
 
 # Question 6
 USE_ARCHIVE=$(ask_yes_no "Will this server be used as an Archive server?" "y")
 
 # Question 7
 USE_TDGUI=$(ask_yes_no "Will this server use the TOP DIALER GUI?" "n")
+
+SERVER_ID=$(ask_input "Please set an ID for your server:(No space or special char)" "topd")
+
+SERVER_DESC=$(ask_input "Please set a Description for your server" "top test")
 
 # Print summary
 echo -e "\nInstallation Summary:"
@@ -112,8 +119,11 @@ else
 fi
 echo "Used as Web server: $USE_WEB"
 echo "Used as Telephony server: $USE_TELEPHONY"
+echo "First Telephony server: $FIRST_TELEPHONY"
 echo "Used as Archive server: $USE_ARCHIVE"
 echo "Used as TOP DIALER GUI: $USE_TDGUI"
+echo "Your Server ID: $SERVER_ID"
+echo "Your Server Description: $SERVER_DESC"
 
 # Ask if the user wants to continue
 CONTINUE_INSTALL_FINAL=$(ask_yes_no "Do you want to continue with the installation?" "y")
@@ -377,8 +387,6 @@ SET GLOBAL connect_timeout=60;
 
 USE asterisk;
 \. /usr/src/astguiclient/trunk/extras/MySQL_AST_CREATE_tables.sql
-\. /usr/src/astguiclient/trunk/extras/first_server_install.sql
-UPDATE servers SET asterisk_version='18.18.1';
 QUIT
 MYSQLCREOF
 
@@ -395,17 +403,62 @@ tar -xzf astgui.tar.gz
 cp astguiclient.conf /etc/astguiclient.conf
 
 echo "Replace Default parameters"
-sed -i s/MAINDBIP/"$LOCAL_IP"/g /etc/astguiclient.conf
+if [[ "$USE_DATABASE" == "y" ]]; then    
+    sed -i s/MAINDBIP/localhost/g /etc/astguiclient.conf
+    if [[ "$USE_TELEPHONY" == "y" ]]; then
+        sed -i s/SKEEPALIVES/123456789ESC/g /etc/astguiclient.conf
+    else
+        sed -i s/SKEEPALIVES/579EC/g /etc/astguiclient.conf
+    fi
+else
+    sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
+    sed -i s/SKEEPALIVES/123468SC/g /etc/astguiclient.conf
+fi
+sed -i s/SERVERIP/"$LOCAL_IP"/g /etc/astguiclient.conf
 sed -i s/DBNAME/"$db_name"/g /etc/astguiclient.conf
 sed -i s/DBUSER/"$db_username"/g /etc/astguiclient.conf
 sed -i s/DBPASS/"$db_password"/g /etc/astguiclient.conf
-sed -i s/CDBUSER/"$db_custom_username"/g /etc/astguiclient.conf
-sed -i s/CDBPASS/"$db_custom_password"/g /etc/astguiclient.conf
+sed -i s/CUSER/"$db_custom_username"/g /etc/astguiclient.conf
+sed -i s/CPASS/"$db_custom_password"/g /etc/astguiclient.conf
 sed -i s/DBPORT/"$db_port"/g /etc/astguiclient.conf
 
 echo "Install VICIDIAL"
 cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
+
+if [[ "$USE_TELEPHONY" == "y" ]]; then
+    if [[ "$FIRST_TELEPHONY" == "y" ]]; then
+        sed "s/10.10.10.15/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/first_server_install.sql > /usr/src/topdialer/firstserver.sql
+        sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/firstserver.sql
+        sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/firstserver.sql
+        if [[ "$USE_DATABASE" == "y" ]]; then
+            {
+              cat /usr/src/topdialer/firstserver.sql
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+            } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+        else
+            {
+              cat /usr/src/topdialer/firstserver.sql
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+            } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+        fi
+    else
+        sed "s/10.10.10.16/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/second_server_install.sql > /usr/src/topdialer/secondserver.sql
+        sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/secondserver.sql
+        sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/secondserver.sql
+        if [[ "$USE_DATABASE" == "y" ]]; then
+            {
+              cat /usr/src/topdialer/secondserver.sql
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+            } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+        else
+            {
+              cat /usr/src/topdialer/secondserver.sql
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+            } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+        fi
+    fi
+fi
 
 #Secure Manager 
 sed -i s/0.0.0.0/127.0.0.1/g /etc/asterisk/manager.conf
@@ -414,8 +467,8 @@ sed -i s/0.0.0.0/127.0.0.1/g /etc/asterisk/manager.conf
 
 echo "Populate AREA CODES"
 /usr/share/astguiclient/ADMIN_area_code_populate.pl
-echo "Replace OLD IP. You need to Enter your Current IP here"
-/usr/share/astguiclient/ADMIN_update_server_ip.pl --auto --old-server_ip=10.10.10.15 --server_ip=$LOCAL_IP
+#echo "Replace OLD IP. You need to Enter your Current IP here"
+#/usr/share/astguiclient/ADMIN_update_server_ip.pl --auto --old-server_ip=10.10.10.15 --server_ip=$LOCAL_IP
 
 #Install Crontab
 if [[ "$USE_DATABASE" == "y" || "$USE_TELEPHONY" == "y" ]]; then
