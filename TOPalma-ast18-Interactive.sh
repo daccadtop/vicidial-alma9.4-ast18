@@ -745,18 +745,24 @@ if [ "$USE_TELEPHONY" != "y" ]; then
     echo "Disabling telephony-related services."
     sudo systemctl stop asterisk
     sudo systemctl disable asterisk
+    sudo systemctl stop firewalld
+    sudo systemctl disable firewalld
 fi
 # When USE_WEB is not true
 if [ "$USE_WEB" != "y" ]; then
     echo "Disabling web server-related services."
     sudo systemctl stop httpd
     sudo systemctl disable httpd
+    sudo systemctl stop firewalld
+    sudo systemctl disable firewalld
 fi
 # When USE_DATABASE is not true
 if [ "$USE_DATABASE" != "y" ]; then
     echo "Disabling web server-related services."
     sudo systemctl stop mariadb
     sudo systemctl disable mariadb
+    sudo systemctl stop firewalld
+    sudo systemctl disable firewalld
 fi
 
 read -p 'Press Enter to Reboot: '
