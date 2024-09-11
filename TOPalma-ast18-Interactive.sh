@@ -69,6 +69,9 @@ else
     db_server_ip=$(ask_input "DB Server IP" "$LOCAL_IP")
     db_username=$(ask_input "DB Username" "cron")
     db_password=$(ask_input "DB Password" "1234")
+    db_name=$(ask_input "DB Name" "asterisk")
+    db_custom_username=$(ask_input "DB Custom Username" "custom")
+    db_custom_password=$(ask_input "DB Custom Password" "custom1234")
     db_port=$(ask_input "DB Port" "3306")
     db_slave_user=$(ask_input "DB Slave User" "slave")
     db_slave_pass=$(ask_input "DB Slave Pass" "slave1234")
@@ -184,7 +187,6 @@ upload_max_filesize = 442M
 default_socket_timeout = 3360
 date.timezone = America/New_York
 EOF
-
 
 systemctl restart httpd
 
