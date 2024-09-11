@@ -427,12 +427,9 @@ cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
 if [[ "$USE_DATABASE" == "y" && "$USE_TELEPHONY" != "y" ]]; then
-    sed "s/10.10.10.15/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/first_server_install.sql > /usr/src/topdialer/firstserver.sql
-    sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/firstserver.sql
-    sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/firstserver.sql
     {
-    cat /usr/src/topdialer/firstserver.sql
-    echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+    echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
+    echo "UPDATE servers SET active_asterisk_server='N', active_agent_login_server='N' WHERE server_id='$SERVER_ID';"
     } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
     else
 if [[ "$USE_TELEPHONY" == "y" ]]; then
@@ -478,6 +475,8 @@ echo "Populate AREA CODES"
 /usr/share/astguiclient/ADMIN_area_code_populate.pl
 #echo "Replace OLD IP. You need to Enter your Current IP here"
 #/usr/share/astguiclient/ADMIN_update_server_ip.pl --auto --old-server_ip=10.10.10.15 --server_ip=$LOCAL_IP
+
+perl /usr/src/astguiclient/trunk/install.pl --no-prompt
 
 #Install Crontab
 if [[ "$USE_DATABASE" == "y" || "$USE_TELEPHONY" == "y" ]]; then
