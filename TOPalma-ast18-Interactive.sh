@@ -426,6 +426,15 @@ echo "Install VICIDIAL"
 cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
+if [[ "$USE_DATABASE" == "y" && "$USE_TELEPHONY" != "y" ]]; then
+    sed "s/10.10.10.15/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/first_server_install.sql > /usr/src/topdialer/firstserver.sql
+    sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/firstserver.sql
+    sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/firstserver.sql
+    {
+    cat /usr/src/topdialer/firstserver.sql
+    echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+    } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+    else
 if [[ "$USE_TELEPHONY" == "y" ]]; then
     if [[ "$FIRST_TELEPHONY" == "y" ]]; then
         sed "s/10.10.10.15/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/first_server_install.sql > /usr/src/topdialer/firstserver.sql
@@ -459,7 +468,7 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         fi
     fi
 fi
-
+fi
 #Secure Manager 
 sed -i s/0.0.0.0/127.0.0.1/g /etc/asterisk/manager.conf
 
