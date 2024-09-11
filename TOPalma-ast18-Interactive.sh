@@ -426,6 +426,12 @@ echo "Install VICIDIAL"
 cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
+if [[ "$USE_WEB" == "y" && "$USE_DATABASE" != "y" && "$USE_TELEPHONY" != "y" ]]; then
+    {
+    echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
+    echo "UPDATE servers SET active_asterisk_server='N', active_agent_login_server='N' WHERE server_id='$SERVER_ID';"
+    } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+fi
 if [[ "$USE_DATABASE" == "y" && "$USE_TELEPHONY" != "y" ]]; then
     {
     echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
@@ -440,12 +446,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     else
@@ -455,12 +461,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     fi
@@ -521,9 +527,7 @@ fi
 if [ "$USE_DATABASE" != "y" ]; then
     echo "Disabling database-related services."
     sudo sed -i 's|systemctl start mariadb.service|### systemctl start mariadb.service|g' /etc/rc.d/rc.local
-fi
-# When USE_WEB is not true
-if [ "$USE_WEB" != "y" ]; then
+else
     echo "Disabling web server-related services."
     sudo sed -i 's|systemctl start httpd.service|### systemctl start httpd.service|g' /etc/rc.d/rc.local
 fi
@@ -664,8 +668,8 @@ if [ "$USE_TELEPHONY" != "y" ]; then
     sudo sed -i 's|/usr/sbin/dahdi_cfg|### /usr/sbin/dahdi_cfg|g' ~/.bashrc
     sudo sed -i 's|/usr/sbin/asterisk|### /usr/sbin/asterisk|g' ~/.bashrc
 fi
-# When USE_WEB is not true
-if [ "$USE_WEB" != "y" ]; then
+# When USE_DATABASE is true
+if [ "$USE_DATABASE" == "y" ]; then
     echo "Disabling web server-related services."
     sudo sed -i 's|/usr/bin/systemctl status http|### /usr/bin/systemctl status http|g' ~/.bashrc
 fi
@@ -715,7 +719,6 @@ cd /usr/src/topdialer
 chmod +x vicidial-enable-webrtc.sh
 service firewalld stop
 ./vicidial-enable-webrtc.sh
-#service firewalld start
 systemctl disable firewalld
 fi
 COMMENT
