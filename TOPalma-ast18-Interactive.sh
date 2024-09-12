@@ -528,7 +528,8 @@ fi
 if [ "$USE_DATABASE" != "y" ]; then
     echo "Disabling database-related services."
     sudo sed -i 's|systemctl start mariadb.service|### systemctl start mariadb.service|g' /etc/rc.d/rc.local
-else
+fi
+if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
     echo "Disabling web server-related services."
     sudo sed -i 's|systemctl start httpd.service|### systemctl start httpd.service|g' /etc/rc.d/rc.local
 fi
@@ -548,10 +549,25 @@ wget http://10.7.78.25/autoinstall/topdialergui.tar.gz
 tar -xzf topdialergui.tar.gz
 chmod -R 744 admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
 chown -R apache:apache admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
+    if [[ "$USE_DATABASE" == "y" ]]; then
+        {
+            echo "UPDATE system_settings set admin_home_url='../admin/main.php', agent_script='agents.php', admin_web_directory='admin'";
+        } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+    else
+        {
+            echo "UPDATE system_settings set admin_home_url='../admin/main.php', agent_script='agents.php', admin_web_directory='admin'";
+        } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+    fi
 else
-cat <<WELCOME>> /var/www/html/index.html
-<META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
-WELCOME
+    if [ "$USE_WEB" != "y" ]; then
+        cat <<WELCOME>> /var/www/html/index.html
+            <html><body><h1>It works!</h1></body></html>
+        WELCOME
+    else
+        cat <<WELCOME>> /var/www/html/index.html
+        <META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
+        WELCOME
+    fi
 fi
 
 ##Install Dynamic firewall
@@ -751,30 +767,29 @@ COMMENT
 
 chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
+
 # Perform actions based on the enabled services
+    sudo systemctl enable asterisk
+    sudo systemctl enable mariadb
+    sudo systemctl enable httpd
+    sudo systemctl stop firewalld
+    sudo systemctl disable firewalld
 # When USE_TELEPHONY is not true
 if [ "$USE_TELEPHONY" != "y" ]; then
     echo "Disabling telephony-related services."
     sudo systemctl stop asterisk
     sudo systemctl disable asterisk
-    sudo systemctl stop firewalld
-    sudo systemctl disable firewalld
-fi
-# When USE_WEB is not true
-if [ "$USE_WEB" != "y" ]; then
-    echo "Disabling web server-related services."
-    sudo systemctl stop httpd
-    sudo systemctl disable httpd
-    sudo systemctl stop firewalld
-    sudo systemctl disable firewalld
 fi
 # When USE_DATABASE is not true
 if [ "$USE_DATABASE" != "y" ]; then
     echo "Disabling web server-related services."
     sudo systemctl stop mariadb
     sudo systemctl disable mariadb
-    sudo systemctl stop firewalld
-    sudo systemctl disable firewalld
+fi
+if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
+    echo "Disabling web server-related services."
+    sudo systemctl stop httpd
+    sudo systemctl disable httpd
 fi
 
 read -p 'Press Enter to Reboot: '
