@@ -413,8 +413,13 @@ if [[ "$USE_DATABASE" == "y" ]]; then
         sed -i s/SKEEPALIVES/579EC/g /etc/astguiclient.conf
     fi
 else
-    sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
-    sed -i s/SKEEPALIVES/123468SC/g /etc/astguiclient.conf
+    if [[ "$USE_TELEPHONY" != "y" ]]; then
+        sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
+        sed -i s/SKEEPALIVES/X/g /etc/astguiclient.conf
+    else
+        sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
+        sed -i s/SKEEPALIVES/123468SC/g /etc/astguiclient.conf
+    fi
 fi
 sed -i s/SERVERIP/"$LOCAL_IP"/g /etc/astguiclient.conf
 sed -i s/DBNAME/"$db_name"/g /etc/astguiclient.conf
@@ -428,12 +433,6 @@ echo "Install VICIDIAL"
 cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
-if [[ "$USE_WEB" == "y" && "$USE_DATABASE" != "y" && "$USE_TELEPHONY" != "y" ]]; then
-    {
-    echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
-    echo "UPDATE servers SET active_asterisk_server='N', active_agent_login_server='N' WHERE server_id='$SERVER_ID';"
-    } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
-fi
 if [[ "$USE_DATABASE" == "y" && "$USE_TELEPHONY" != "y" ]]; then
     {
     echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
