@@ -92,6 +92,11 @@ USE_ARCHIVE=$(ask_yes_no "Will this server be used as an Archive server?" "y")
 # Question 7
 USE_TDGUI=$(ask_yes_no "Will this server use the TOP DIALER GUI?" "n")
 
+if [[ $USE_TELEPHONY == "y" || $USE_WEB == "y" ]]; then
+        domain_name=$(ask_input "Please set your Domain Name" "xxxx.xxxxxx.xxx")
+        admin_email=$(ask_input "Domain Admin Email Address" "certs@topit.solutions")
+fi
+
 SERVER_ID=$(ask_input "Please set an ID for your server:(No space or special char)" "topd")
 
 SERVER_DESC=$(ask_input "Please set a Description for your server" "top test")
@@ -725,21 +730,6 @@ sudo systemctl start rc-local.service
 chmod 777 /var/spool/asterisk/monitorDONE
 chkconfig asterisk off
 
-mv /etc/httpd/conf.d/viciportal-ssl.conf /etc/httpd/conf.d/viciportal-ssl.conf.off
-
-: <<'COMMENT'
-if [[ "$USE_DATABASE" != "y" ]]; then
-yum in certbot -y
-systemctl enable certbot-renew.timer
-systemctl start certbot-renew.timer
-cd /usr/src/topdialer
-chmod +x vicidial-enable-webrtc.sh
-service firewalld stop
-./vicidial-enable-webrtc.sh
-systemctl disable firewalld
-fi
-COMMENT
-
 ##ConfBridge Setup
 ##./vicidial-enable-confbridge.sh
 
@@ -779,6 +769,53 @@ if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
     echo "Disabling web server-related services."
     sudo systemctl stop httpd
     sudo systemctl disable httpd
+fi
+
+# SSL Certificate
+if [[ "$USE_WEB" == "y" || "$USE_TELEPHONY" == "y" ]]; then
+echo "Install certbot for LetsEncrypt"
+cd /usr/src/topdialer
+#wget https://topt.topdialer.solutions:8080/autoinstall/rclocal.tar.gz
+wget http://10.7.78.25/autoinstall/webrtc.tar.gz
+tar -xzf webrtc.tar.gz
+
+cp DOMAINNAME.conf /etc/httpd/conf.d/$domain_name.conf
+sed -i "s/DOMAINNAME/$domain_name/g" /etc/httpd/conf.d/$domain_name.conf
+sed -i "s/DOMAINADMIN/$admin_email/g" /etc/httpd/conf.d/$domain_name.conf
+
+mv /etc/asterisk/http.conf /etc/asterisk/http.BKconf
+cp asterisk-http.conf /etc/asterisk/http.conf
+
+mv /etc/asterisk/sip.conf /etc/asterisk/sip.BKconf
+cp asterisk-sip.conf /etc/asterisk/sip.conf
+sed -i "s/DOMAINNAME/$domain_name/g" /etc/asterisk/sip.conf
+
+yum -y install certbot python3-certbot-apache mod_ssl
+systemctl enable certbot-renew.timer
+systemctl start certbot-renew.timer
+service firewalld stop
+
+certbot --apache --agree-tos -d $domain_name -m $admin_email -n
+
+ln -s /etc/letsencrypt/live/$domain_name/cert.pem /etc/httpd/conf.d/topcert.pem
+ln -s /etc/letsencrypt/live/$domain_name/privkey.pem /etc/httpd/conf.d/topprivkey.pem
+ln -s /etc/letsencrypt/live/$domain_name/fullchain.pem /etc/httpd/conf.d/topfullchain.pem
+
+sed -i "s/DOMAINNAME/$domain_name/g" /usr/src/topdialer/webrtc.sql
+sed -i "s/SERVERID/$SERVER_ID/g" /usr/src/topdialer/webrtc.sql
+    
+    if [[ "$USE_DATABASE" == "y" ]]; then
+        {
+          cat /usr/src/topdialer/webrtc.sql
+        } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+    else
+        {
+          cat /usr/src/topdialer/webrtc.sql
+        } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+    fi
+read -p 'If you had any issues during the certificate process please make sure install it manually, press enter to continue:'
+echo "Reloading apache"
+systemctl restart httpd
 fi
 
 read -p 'Press Enter to Reboot: '
