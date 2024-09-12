@@ -754,17 +754,6 @@ eventfilter=Event: Meetme
 eventfilter=Event: Confbridge
 EOF
 
-: <<'COMMENT'
-#Update System Settings and Server
-echo "%%%%%%%%%%%%%%%Please Enter Mysql Password Or Just Press Enter if you Dont have Password%%%%%%%%%%%%%%%%%%%%%%%%%%"
-mysql -u root -p << MYSQLCREOF
-use asterisk;
-UPDATE system_settings set admin_home_url='../admin/main.php', agent_script='agents.php', admin_web_directory='admin';
-UPDATE servers set server_id='TOPIT', server_description='TOP Dialer SS', conf_engine='CONFBRIDGE';
-quit
-MYSQLCREOF
-COMMENT
-
 chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
 
