@@ -779,7 +779,7 @@ fi
 if [[ "$USE_WEB" == "y" || "$USE_TELEPHONY" == "y" ]]; then
 echo "Install certbot for LetsEncrypt"
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/rclocal.tar.gz
+#wget https://topt.topdialer.solutions:8080/autoinstall/webrtc.tar.gz
 wget http://10.7.78.25/autoinstall/webrtc.tar.gz
 tar -xzf webrtc.tar.gz
 
