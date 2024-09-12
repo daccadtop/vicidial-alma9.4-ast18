@@ -565,13 +565,17 @@ chown -R apache:apache admin agents auth dashboard favicon.ico index.html p_logi
     fi
 else
     if [ "$USE_WEB" != "y" ]; then
-        cat <<WELCOME>> /var/www/html/index.html
-            <html><body><h1>It works!</h1></body></html>
-        WELCOME
+tee /var/www/html/index.html > /dev/null <<EOF
+<html>
+<body>
+    <h1>It works!</h1>
+</body>
+</html>
+EOF
     else
-        cat <<WELCOME>> /var/www/html/index.html
-        <META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
-        WELCOME
+tee /var/www/html/index.html > /dev/null <<EOF
+<META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
+EOF
     fi
 fi
 
