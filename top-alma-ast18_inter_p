@@ -235,6 +235,10 @@ cd /usr/src/topdialer
 curl -fsSL https://raw.githubusercontent.com/skaji/cpm/main/cpm | perl - install -g App::cpm
 /usr/local/bin/cpm install -g
 
+read -p 'Press Enter to continue: '
+
+echo 'Continuing...'
+
 #Install Asterisk Perl
 cd /usr/src
 wget http://download.vicidial.com/required-apps/asterisk-perl-0.08.tar.gz
