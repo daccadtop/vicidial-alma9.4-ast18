@@ -738,6 +738,13 @@ sudo systemctl start rc-local.service
 chmod 777 /var/spool/asterisk/monitorDONE
 chkconfig asterisk off
 
+##Password Encryption
+if [ "$USE_DATABASE" == "y" ]; then
+cat "yes" |  cpan -T Crypt::Eksblowfish::Bcrypt
+/usr/share/astguiclient/ADMIN_bcrypt_convert.pl --debugX --test
+/usr/share/astguiclient/ADMIN_bcrypt_convert.pl --debugX
+fi
+
 ##ConfBridge Setup
 if [ "$USE_TELEPHONY" == "y" ]; then
 ##./vicidial-enable-confbridge.sh
