@@ -158,10 +158,10 @@ yum in -y wget unzip make patch gcc gcc-c++ subversion php php-devel php-gd gd-d
 yum in -y php-imap php-ldap php-mysqli php-odbc php-pear php-xml php-xmlrpc curl curl-devel perl-libwww-perl ImageMagick 
 sleep 3
 yum in -y newt-devel libxml2-devel kernel-devel sqlite-devel libuuid-devel sox sendmail lame-devel htop iftop perl-File-Which
-yum in -y php-opcache libss7 mariadb-devel libss7* libopen* 
+yum in -y php-opcache libss7 mariadb-devel libss7* libopen*
+yum in -y initscripts
 yum copr enable irontec/sngrep -y
 dnf install sngrep -y
-
 
 dnf --enablerepo=crb install libsrtp-devel -y
 dnf config-manager --set-enabled crb
@@ -272,16 +272,16 @@ mkdir /etc/include
 cp /usr/src/topdialer/newt.h /etc/include/
 
 cd /usr/src/
-mkdir dahdi-linux-complete-3.2.0+3.2.0
-cd dahdi-linux-complete-3.2.0+3.2.0
+mkdir dahdi-linux-complete-3.4.0+3.4.0
+cd dahdi-linux-complete-3.4.0+3.4.0
 #cp /usr/src/topdialer/dahdi-alma9.zip /usr/src/dahdi-linux-complete-3.2.0+3.2.0/
 #wget https://topt.topdialer.solutions:8080/autoinstall/dahdi-alma9-4.tar.gz
 wget http://10.7.78.25/autoinstall/dahdi-alma9-4.tar.gz
 tar -xzf dahdi-alma9-4.tar.gz
 yum in newt* -y
 
-sudo sed -i 's|(netdev, \&wc->napi, \&wctc4xxp_poll, 64);|(netdev, \&wc->napi, \&wctc4xxp_poll);|g' /usr/src/dahdi-linux-complete-3.2.0+3.2.0/linux/drivers/dahdi/wctc4xxp/base.c
-sudo sed -i 's|<linux/pci-aspm.h>|<linux/pci.h>|g' /usr/src/dahdi-linux-complete-3.2.0+3.2.0/linux/include/dahdi/kernel.h
+##sudo sed -i 's|(netdev, \&wc->napi, \&wctc4xxp_poll, 64);|(netdev, \&wc->napi, \&wctc4xxp_poll);|g' /usr/src/dahdi-linux-complete-3.2.0+3.2.0/linux/drivers/dahdi/wctc4xxp/base.c
+##sudo sed -i 's|<linux/pci-aspm.h>|<linux/pci.h>|g' /usr/src/dahdi-linux-complete-3.2.0+3.2.0/linux/include/dahdi/kernel.h
 
 make clean
 make
@@ -300,6 +300,10 @@ cp /etc/dahdi/system.conf.sample /etc/dahdi/system.conf
 modprobe dahdi
 modprobe dahdi_dummy
 /usr/sbin/dahdi_cfg -vvvvvvvvvvvvv
+
+systemctl enable dahdi
+service dahdi start
+service dahdi status
 
 if [[ "$USE_TELEPHONY" == "y" ]]; then
 read -p 'Press Enter to continue: '
@@ -441,6 +445,9 @@ echo "Install VICIDIAL"
 cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
+#Secure Manager 
+sed -i s/0.0.0.0/127.0.0.1/g /etc/asterisk/manager.conf
+
 if [[ "$USE_DATABASE" == "y" && "$USE_TELEPHONY" != "y" ]]; then
     {
     echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
@@ -457,12 +464,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     else
@@ -474,19 +481,17 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     fi
 fi
 fi
-#Secure Manager 
-sed -i s/0.0.0.0/127.0.0.1/g /etc/asterisk/manager.conf
 
 #Add chan_sip to Asterisk 18
 
@@ -609,19 +614,6 @@ mv codec_g729-ast160-gcc4-glibc-x86_64-core2-sse4.so codec_g729.so
 chmod 777 codec_g729.so
 fi
 
-tee -a /etc/httpd/conf/httpd.conf <<EOF
-
-CustomLog /dev/null common
-
-Alias /RECORDINGS/MP3 "/var/spool/asterisk/monitorDONE/MP3/"
-
-<Directory "/var/spool/asterisk/monitorDONE/MP3/">
-    Options Indexes MultiViews
-    AllowOverride None
-    Require all granted
-</Directory>
-EOF
-
 ##Install Sounds
 
 cd /usr/src
@@ -702,7 +694,7 @@ if [ "$USE_TELEPHONY" != "y" ]; then
     sudo sed -i 's|/usr/sbin/asterisk|### /usr/sbin/asterisk|g' ~/.bashrc
 fi
 # When USE_DATABASE is true
-if [ "$USE_DATABASE" == "y" ]; then
+if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
     echo "Disabling web server-related services."
     sudo sed -i 's|/usr/bin/systemctl status http|### /usr/bin/systemctl status http|g' ~/.bashrc
 fi
@@ -731,14 +723,14 @@ EOF
 
 ##fstab entry
 tee -a /etc/fstab <<EOF
-none /var/spool/asterisk/monitor tmpfs nodev,nosuid,noexec,nodiratime,size=500M 0 0
+none /var/spool/asterisk/monitor tmpfs nodev,nosuid,noexec,nodiratime,size=2G 0 0
 EOF
 
 systemctl daemon-reload
 sudo systemctl enable rc-local.service
 sudo systemctl start rc-local.service
 
-chmod 777 /var/spool/asterisk/monitorDONE
+chmod 775 /var/spool/asterisk/
 chkconfig asterisk off
 
 ##Password Encryption
