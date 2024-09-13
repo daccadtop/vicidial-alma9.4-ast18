@@ -370,35 +370,482 @@ cd /usr/src/astguiclient
 svn checkout svn://svn.eflo.net/agc_2-X/trunk
 cd /usr/src/astguiclient/trunk
 
+if [ "$USE_DATABASE" == "y" ]; then
+#Add mysql users and Databases
+mysql -u root <<MYSQLCREOF
+CREATE DATABASE asterisk DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+CREATE USER 'cron'@'localhost' IDENTIFIED BY '$db_password';
+GRANT SELECT, CREATE, ALTER, INSERT, UPDATE, DELETE, LOCK TABLES ON asterisk.* TO 'cron'@'%' IDENTIFIED BY '$db_password';
+GRANT SELECT, CREATE, ALTER, INSERT, UPDATE, DELETE, LOCK TABLES ON asterisk.* TO 'cron'@'localhost' IDENTIFIED BY '$db_password';
+GRANT RELOAD ON *.* TO 'cron'@'%';
+GRANT RELOAD ON *.* TO 'cron'@'localhost';
+CREATE USER 'custom'@'localhost' IDENTIFIED BY '$db_custom_password';
+GRANT SELECT, CREATE, ALTER, INSERT, UPDATE, DELETE, LOCK TABLES ON asterisk.* TO 'custom'@'%' IDENTIFIED BY '$db_custom_password';
+GRANT SELECT, CREATE, ALTER, INSERT, UPDATE, DELETE, LOCK TABLES ON asterisk.* TO 'custom'@'localhost' IDENTIFIED BY '$db_custom_password';
+GRANT RELOAD ON *.* TO 'custom'@'%';
+GRANT RELOAD ON *.* TO 'custom'@'localhost';
+CREATE USER 'slave'@'localhost' IDENTIFIED BY '$db_slave_pass';
+GRANT SELECT, CREATE, ALTER, INSERT, UPDATE, DELETE, LOCK TABLES ON asterisk.* TO 'slave'@'%' IDENTIFIED BY '$db_slave_pass';
+GRANT SELECT, CREATE, ALTER, INSERT, UPDATE, DELETE, LOCK TABLES ON asterisk.* TO 'slave'@'localhost' IDENTIFIED BY '$db_slave_pass';
+GRANT RELOAD ON *.* TO 'slave'@'%';
+GRANT RELOAD ON *.* TO 'slave'@'localhost';
+FLUSH PRIVILEGES;
 
+SET GLOBAL connect_timeout=60;
 
+USE asterisk;
+\. /usr/src/astguiclient/trunk/extras/MySQL_AST_CREATE_tables.sql
+QUIT
+MYSQLCREOF
 
+read -p 'Press Enter to continue: '
+echo 'Continuing...'
+fi
 
+#Get astguiclient.conf file
+cd /usr/src/topdialer
+#wget https://topt.topdialer.solutions:8080/autoinstall/astgui.tar.gz
+wget http://10.7.78.25/autoinstall/astgui.tar.gz
+tar -xzf astgui.tar.gz
+cp astguiclient.conf /etc/astguiclient.conf
 
+echo "Replace Default parameters"
+if [[ "$USE_DATABASE" == "y" ]]; then    
+    sed -i s/MAINDBIP/localhost/g /etc/astguiclient.conf
+    if [[ "$USE_TELEPHONY" == "y" ]]; then
+        sed -i s/SKEEPALIVES/123456789EC/g /etc/astguiclient.conf
+    else
+        sed -i s/SKEEPALIVES/89EC/g /etc/astguiclient.conf
+    fi
+else
+    if [[ "$USE_TELEPHONY" != "y" ]]; then
+        sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
+        sed -i s/SKEEPALIVES/X/g /etc/astguiclient.conf
+    else
+        if [[ "$FIRST_TELEPHONY" == "y" ]]; then
+            sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
+            sed -i s/SKEEPALIVES/12345678C/g /etc/astguiclient.conf
+        else
+            sed -i s/MAINDBIP/"$db_server_ip"/g /etc/astguiclient.conf
+            sed -i s/SKEEPALIVES/123468C/g /etc/astguiclient.conf
+        fi
+    fi
+fi
 
+echo "Install VICIDIAL"
+cd /usr/src/astguiclient/trunk
+perl install.pl --no-prompt --copy_sample_conf_files=Y
 
+#Secure Manager 
+sed -i s/0.0.0.0/127.0.0.1/g /etc/asterisk/manager.conf
 
+#Add chan_sip to Asterisk 18
 
+echo "Populate AREA CODES"
+/usr/share/astguiclient/ADMIN_area_code_populate.pl
+#echo "Replace OLD IP. You need to Enter your Current IP here"
+#/usr/share/astguiclient/ADMIN_update_server_ip.pl --old-server_ip=10.10.10.15
 
+if [[ "$USE_DATABASE" == "y" && "$USE_TELEPHONY" != "y" ]]; then
+    {
+    echo "INSERT INTO servers (server_id,server_description,server_ip,active,asterisk_version)values('$SERVER_ID','$SERVER_DESC', '$LOCAL_IP','Y','18.18.1');"
+    echo "UPDATE servers SET active_asterisk_server='N', active_agent_login_server='N' WHERE server_id='$SERVER_ID';"
+    } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+    else
+if [[ "$USE_TELEPHONY" == "y" ]]; then
+    if [[ "$FIRST_TELEPHONY" == "y" ]]; then
+        sed "s/10.10.10.15/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/first_server_install.sql > /usr/src/topdialer/firstserver.sql
+        sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/firstserver.sql
+        sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/firstserver.sql
+        echo "" >> /usr/src/topdialer/firstserver.sql && cat /usr/src/topdialer/confbridges.sql >> /usr/src/topdialer/firstserver.sql 
+        sed -i "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/firstserver.sql
+        if [[ "$USE_DATABASE" == "y" ]]; then
+            {
+              cat /usr/src/topdialer/firstserver.sql
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+            } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+        else
+            {
+              cat /usr/src/topdialer/firstserver.sql
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+            } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+        fi
+    else
+        sed "s/10.10.10.16/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/second_server_install.sql > /usr/src/topdialer/secondserver.sql
+        sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/secondserver.sql
+        sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/secondserver.sql
+        echo "" >> /usr/src/topdialer/secondserver.sql && cat /usr/src/topdialer/confbridges.sql >> /usr/src/topdialer/secondserver.sql
+        sed -i "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/secondserver.sql
+        if [[ "$USE_DATABASE" == "y" ]]; then
+            {
+              cat /usr/src/topdialer/secondserver.sql
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+            } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+        else
+            {
+              cat /usr/src/topdialer/secondserver.sql
+              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+            } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+        fi
+    fi
+fi
+fi
 
+perl /usr/src/astguiclient/trunk/install.pl --no-prompt
 
+#Install Crontab
+if [[ "$USE_DATABASE" == "y" || "$USE_TELEPHONY" == "y" ]]; then
+cd /usr/src/topdialer
+#wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
+wget http://10.7.78.25/autoinstall/crons.tar.gz
+tar -xzf crons.tar.gz
+touch /root/crontab-file
+cat allcron > /root/crontab-file
+fi
+if [[ "$USE_DATABASE" == "y" ]]; then
+cat dbcron >> /root/crontab-file
+fi
+if [[ "$USE_TELEPHONY" == "y" ]]; then
+cat dialcron >> /root/crontab-file
+fi
 
+crontab /root/crontab-file
+crontab -l
 
+#Install rc.local
+sudo sed -i 's|exit 0|### exit 0|g' /etc/rc.d/rc.local
+cd /usr/src/topdialer
+#wget https://topt.topdialer.solutions:8080/autoinstall/rclocal.tar.gz
+wget http://10.7.78.25/autoinstall/rclocal.tar.gz
+tar -xzf rclocal.tar.gz
+cat rc.local >> /etc/rc.d/rc.local
 
+#Adjust rc.local as needed
+# Perform actions based on the enabled services
+# When USE_TELEPHONY is not true
+if [ "$USE_TELEPHONY" != "y" ]; then
+    echo "Disabling telephony-related services."
+    sudo sed -i 's|modprobe dahdi|### modprobe dahdi|g' /etc/rc.d/rc.local
+    sudo sed -i 's|modprobe dahdi_dummy|### modprobe dahdi_dummy|g' /etc/rc.d/rc.local
+    sudo sed -i 's|/usr/sbin/dahdi_cfg -vvvvvvvvvvvvv|### /usr/sbin/dahdi_cfg -vvvvvvvvvvvvv|g' /etc/rc.d/rc.local
+    sudo sed -i 's|/usr/share/astguiclient/start_asterisk_boot.pl|### /usr/share/astguiclient/start_asterisk_boot.pl|g' /etc/rc.d/rc.local
+    sudo sed -i 's|/usr/share/astguiclient/ADMIN_restart_roll_logs.pl|### /usr/share/astguiclient/ADMIN_restart_roll_logs.pl|g' /etc/rc.d/rc.local
+    sudo sed -i 's|/usr/share/astguiclient/AST_reset_mysql_vars.pl|### /usr/share/astguiclient/AST_reset_mysql_vars.pl|g' /etc/rc.d/rc.local
+fi
+# When USE_DATABASE is not true
+if [ "$USE_DATABASE" != "y" ]; then
+    echo "Disabling database-related services."
+    sudo sed -i 's|systemctl start mariadb.service|### systemctl start mariadb.service|g' /etc/rc.d/rc.local
+fi
+if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
+    echo "Disabling web server-related services."
+    sudo sed -i 's|systemctl start httpd.service|### systemctl start httpd.service|g' /etc/rc.d/rc.local
+fi
 
+chmod +x /etc/rc.d/rc.local
+systemctl enable rc-local
+systemctl start rc-local
 
+if [[ "$USE_TDGUI" == "y" ]]; then
+##Install TOP DIALER GUI
+cd /var/www/html
+mv favicon.ico faviconBK.icoBK
+mv index.html index.BKhtml
+#wget https://topt.topdialer.solutions:8080/autoinstall/topdialergui.tar.gz
+wget http://10.7.78.25/autoinstall/topdialergui.tar.gz
+#cp /usr/src/topdialer/topdialergui.tar.gz /var/www/html/
+tar -xzf topdialergui.tar.gz
+chmod -R 744 admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
+chown -R apache:apache admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
+    if [[ "$USE_DATABASE" == "y" ]]; then
+        {
+            echo "UPDATE system_settings set admin_home_url='../admin/main.php', agent_script='agents.php', admin_web_directory='admin'";
+        } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+    else
+        {
+            echo "UPDATE system_settings set admin_home_url='../admin/main.php', agent_script='agents.php', admin_web_directory='admin'";
+        } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+    fi
+else
+    if [ "$USE_WEB" != "y" ]; then
+tee /var/www/html/index.html > /dev/null <<EOF
+<html>
+<body>
+    <h1>It works!</h1>
+</body>
+</html>
+EOF
+    else
+tee /var/www/html/index.html > /dev/null <<EOF
+<META HTTP-EQUIV=REFRESH CONTENT="1; URL=/vicidial/welcome.php">
+EOF
+    fi
+fi
 
+##Install Dynamic firewall
+cd /home/
+#cp /usr/src/topdialer/topfirewall.tar.gz /home/
+#wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
+wget http://10.7.78.25/autoinstall/topfirewall.tar.gz
+tar -xzf topfirewall.tar.gz
 
+##Fix ip_relay
+cd /usr/src/astguiclient/trunk/extras/ip_relay/
+unzip ip_relay_1.1.112705.zip
+cd ip_relay_1.1/src/unix/
+make
+cp ip_relay ip_relay2
+mv -f ip_relay /usr/bin/
+mv -f ip_relay2 /usr/local/bin/ip_relay
 
+cd /usr/lib64/asterisk/modules
+wget http://asterisk.hosting.lv/bin/codec_g729-ast160-gcc4-glibc-x86_64-core2-sse4.so
+mv codec_g729-ast160-gcc4-glibc-x86_64-core2-sse4.so codec_g729.so
+chmod 777 codec_g729.so
 
+##Install Sounds
 
+cd /usr/src
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-core-sounds-en-ulaw-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-core-sounds-en-wav-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-core-sounds-en-gsm-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-extra-sounds-en-ulaw-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-extra-sounds-en-wav-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-extra-sounds-en-gsm-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-moh-opsound-gsm-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-moh-opsound-ulaw-current.tar.gz
+wget http://downloads.asterisk.org/pub/telephony/sounds/asterisk-moh-opsound-wav-current.tar.gz
 
+#Place the audio files in their proper places:
+cd /var/lib/asterisk/sounds
+tar -zxf /usr/src/asterisk-core-sounds-en-gsm-current.tar.gz
+tar -zxf /usr/src/asterisk-core-sounds-en-ulaw-current.tar.gz
+tar -zxf /usr/src/asterisk-core-sounds-en-wav-current.tar.gz
+tar -zxf /usr/src/asterisk-extra-sounds-en-gsm-current.tar.gz
+tar -zxf /usr/src/asterisk-extra-sounds-en-ulaw-current.tar.gz
+tar -zxf /usr/src/asterisk-extra-sounds-en-wav-current.tar.gz
 
+mkdir /var/lib/asterisk/mohmp3
+mkdir /var/lib/asterisk/quiet-mp3
+ln -s /var/lib/asterisk/mohmp3 /var/lib/asterisk/default
 
+cd /var/lib/asterisk/mohmp3
+tar -zxf /usr/src/asterisk-moh-opsound-gsm-current.tar.gz
+tar -zxf /usr/src/asterisk-moh-opsound-ulaw-current.tar.gz
+tar -zxf /usr/src/asterisk-moh-opsound-wav-current.tar.gz
+rm -f CHANGES*
+rm -f LICENSE*
+rm -f CREDITS*
 
+cd /var/lib/asterisk/moh
+rm -f CHANGES*
+rm -f LICENSE*
+rm -f CREDITS*
 
+cd /var/lib/asterisk/sounds
+rm -f CHANGES*
+rm -f LICENSE*
+rm -f CREDITS*
 
+yum -y in sox
 
+cd /var/lib/asterisk/quiet-mp3
+sox ../mohmp3/macroform-cold_day.wav macroform-cold_day.wav vol 0.25
+sox ../mohmp3/macroform-cold_day.gsm macroform-cold_day.gsm vol 0.25
+sox -t ul -r 8000 -c 1 ../mohmp3/macroform-cold_day.ulaw -t ul macroform-cold_day.ulaw vol 0.25
+sox ../mohmp3/macroform-robot_dity.wav macroform-robot_dity.wav vol 0.25
+sox ../mohmp3/macroform-robot_dity.gsm macroform-robot_dity.gsm vol 0.25
+sox -t ul -r 8000 -c 1 ../mohmp3/macroform-robot_dity.ulaw -t ul macroform-robot_dity.ulaw vol 0.25
+sox ../mohmp3/macroform-the_simplicity.wav macroform-the_simplicity.wav vol 0.25
+sox ../mohmp3/macroform-the_simplicity.gsm macroform-the_simplicity.gsm vol 0.25
+sox -t ul -r 8000 -c 1 ../mohmp3/macroform-the_simplicity.ulaw -t ul macroform-the_simplicity.ulaw vol 0.25
+sox ../mohmp3/reno_project-system.wav reno_project-system.wav vol 0.25
+sox ../mohmp3/reno_project-system.gsm reno_project-system.gsm vol 0.25
+sox -t ul -r 8000 -c 1 ../mohmp3/reno_project-system.ulaw -t ul reno_project-system.ulaw vol 0.25
+sox ../mohmp3/manolo_camp-morning_coffee.wav manolo_camp-morning_coffee.wav vol 0.25
+sox ../mohmp3/manolo_camp-morning_coffee.gsm manolo_camp-morning_coffee.gsm vol 0.25
+sox -t ul -r 8000 -c 1 ../mohmp3/manolo_camp-morning_coffee.ulaw -t ul manolo_camp-morning_coffee.ulaw vol 0.25
+
+tee -a ~/.bashrc <<EOF
+
+# Commands
+/usr/share/astguiclient/ADMIN_keepalive_ALL.pl --cu3way
+/usr/bin/systemctl status httpd --no-pager
+/usr/bin/systemctl status firewalld --no-pager
+/usr/bin/screen -ls
+/usr/sbin/dahdi_cfg -v
+/usr/sbin/asterisk -V
+EOF
+
+# Perform actions based on the enabled services
+# When USE_TELEPHONY is not true
+if [ "$USE_TELEPHONY" != "y" ]; then
+    echo "Disabling telephony-related services."
+    sudo sed -i 's|/usr/sbin/dahdi_cfg|### /usr/sbin/dahdi_cfg|g' ~/.bashrc
+    sudo sed -i 's|/usr/sbin/asterisk|### /usr/sbin/asterisk|g' ~/.bashrc
+fi
+# When USE_DATABASE is true
+if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
+    echo "Disabling web server-related services."
+    sudo sed -i 's|/usr/bin/systemctl status http|### /usr/bin/systemctl status http|g' ~/.bashrc
+fi
+
+sed -i 's|#Banner none|Banner /etc/ssh/sshd_banner|g' /etc/ssh/sshd_config
+
+tee -a /etc/ssh/sshd_banner <<EOF
+Thank you for choosing TOP IT SOLUTIONS!
+https://www.topit.solutions
+EOF
+
+#add rc-local as a service - thx to ras
+tee -a /etc/systemd/system/rc-local.service <<EOF
+[Unit]
+Description=/etc/rc.local Compatibility
+
+[Service]
+Type=oneshot
+ExecStart=/etc/rc.local
+TimeoutSec=0
+StandardInput=tty
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+##fstab entry
+tee -a /etc/fstab <<EOF
+none /var/spool/asterisk/monitor tmpfs nodev,nosuid,noexec,nodiratime,size=2G 0 0
+EOF
+
+systemctl daemon-reload
+sudo systemctl enable rc-local.service
+sudo systemctl start rc-local.service
+
+chmod 775 /var/spool/asterisk/
+chkconfig asterisk off
+
+##Password Encryption
+if [ "$USE_DATABASE" == "y" ]; then
+cat "yes" |  cpan -T Crypt::Eksblowfish::Bcrypt
+/usr/share/astguiclient/ADMIN_bcrypt_convert.pl --debugX --test
+/usr/share/astguiclient/ADMIN_bcrypt_convert.pl --debugX
+fi
+
+##ConfBridge Setup
+if [ "$USE_TELEPHONY" == "y" ]; then
+##./vicidial-enable-confbridge.sh
+cd /usr/src/topdialer
+cp /etc/asterisk/extensions.conf /etc/asterisk/extensions.bk
+awk '/include => vicidial-auto/ {print; system("cat /usr/src/topdialer/confbridge_ext.conf"); next} 1' /etc/asterisk/extensions.conf > /etc/asterisk/TempFile && mv -f /etc/asterisk/TempFile /etc/asterisk/extensions.conf
+mv -f confbridge-vicidial.conf /etc/asterisk/
+
+tee -a /etc/asterisk/confbridge.conf <<EOF
+
+#include confbridge-vicidial.conf
+EOF
+tee -a /etc/asterisk/modules.conf <<EOF
+
+noload => res_timing_timerfd.so
+noload => res_timing_kqueue.so
+noload => res_timing_pthread.so
+EOF
+tee -a /etc/asterisk/manager.conf <<EOF
+
+[confcron]
+secret = 1234
+read = command,reporting
+write = command,reporting
+
+eventfilter=Event: Meetme
+eventfilter=Event: Confbridge
+EOF
+fi
+
+chmod -R 777 /var/spool/asterisk/monitorDONE
+chown -R apache:apache /var/spool/asterisk/monitorDONE
+
+# Perform actions based on the enabled services
+    sudo systemctl enable asterisk
+    sudo systemctl enable mariadb
+    sudo systemctl enable httpd
+    sudo systemctl stop firewalld
+    sudo systemctl disable firewalld
+# When USE_TELEPHONY is not true
+if [ "$USE_TELEPHONY" != "y" ]; then
+    echo "Disabling telephony-related services."
+    sudo systemctl stop asterisk
+    sudo systemctl disable asterisk
+fi
+# When USE_DATABASE is not true
+if [ "$USE_DATABASE" != "y" ]; then
+    echo "Disabling web server-related services."
+    sudo systemctl stop mariadb
+    sudo systemctl disable mariadb
+fi
+if [[ "$USE_WEB" != "y" && "$USE_TELEPHONY" != "y" ]]; then
+    echo "Disabling web server-related services."
+    sudo systemctl stop httpd
+    sudo systemctl disable httpd
+fi
+
+# SSL Certificate
+if [[ "$USE_WEB" == "y" || "$USE_TELEPHONY" == "y" ]]; then
+echo "Install certbot for LetsEncrypt"
+cd /usr/src/topdialer
+#wget https://topt.topdialer.solutions:8080/autoinstall/webrtc.tar.gz
+wget http://10.7.78.25/autoinstall/webrtc.tar.gz
+tar -xzf webrtc.tar.gz
+
+cp DOMAINNAME.conf /etc/httpd/conf.d/$domain_name.conf
+sed -i "s/DOMAINNAME/$domain_name/g" /etc/httpd/conf.d/$domain_name.conf
+sed -i "s/DOMAINADMIN/$admin_email/g" /etc/httpd/conf.d/$domain_name.conf
+
+mv /etc/asterisk/http.conf /etc/asterisk/http.BKconf
+cp asterisk-http.conf /etc/asterisk/http.conf
+
+mv /etc/asterisk/sip.conf /etc/asterisk/sip.BKconf
+cp asterisk-sip.conf /etc/asterisk/sip.conf
+sed -i "s/DOMAINNAME/$domain_name/g" /etc/asterisk/sip.conf
+
+yum -y install certbot python3-certbot-apache mod_ssl
+systemctl enable certbot-renew.timer
+systemctl start certbot-renew.timer
+service firewalld stop
+
+certbot --apache --agree-tos -d $domain_name -m $admin_email -n
+
+ln -s /etc/letsencrypt/live/$domain_name/cert.pem /etc/httpd/conf.d/topcert.pem
+ln -s /etc/letsencrypt/live/$domain_name/privkey.pem /etc/httpd/conf.d/topprivkey.pem
+ln -s /etc/letsencrypt/live/$domain_name/fullchain.pem /etc/httpd/conf.d/topfullchain.pem
+
+sed -i "s/DOMAINNAME/$domain_name/g" /usr/src/topdialer/webrtc.sql
+sed -i "s/SERVERID/$SERVER_ID/g" /usr/src/topdialer/webrtc.sql
+    
+    if [[ "$USE_DATABASE" == "y" ]]; then
+        {
+          cat /usr/src/topdialer/webrtc.sql
+        } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
+    else
+        {
+          cat /usr/src/topdialer/webrtc.sql
+        } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
+    fi
+read -p 'If you had any issues during the certificate process please make sure install it manually, press enter to continue:'
+echo "Reloading apache"
+systemctl restart httpd
+fi
+
+read -p 'Press Enter to Reboot: '
+
+echo "Restarting AlmaLinux"
+
+reboot
+
+else
+    echo "Installation aborted."
+    exit 0
+fi
 
 
 
