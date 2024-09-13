@@ -1,0 +1,143 @@
+#!/bin/sh
+
+echo "TOP DIALER installation AlmaLinux/Ast18/ Interactive Mode"
+
+# Function to ask a yes/no question
+ask_yes_no() {
+    local prompt="$1"
+    local default="$2"
+    local response
+
+    read -p "$prompt (y/n) [default: $default]: " response
+    # Set response to default if the user presses enter without any input
+    response=${response:-$default}
+
+    # Convert response to lowercase to handle both 'y' and 'Y'
+    response=$(echo "$response" | tr '[:upper:]' '[:lower:]')
+
+    # Interpret any input other than 'y' as 'n'
+    if [[ "$response" == "y" ]]; then
+        echo "y"
+    else
+        echo "n"
+    fi
+}
+
+# Function to ask for general input
+ask_input() {
+    local prompt="$1"
+    local default="$2"
+    read -p "$prompt [default: $default]: " response
+    response=${response:-$default}
+    echo "$response"
+}
+
+# Question 1
+CONTINUE_INSTALL=$(ask_yes_no "Are you ready for the installation?" "y")
+if [[ "$CONTINUE_INSTALL" == "n" ]]; then
+    echo "Installation aborted."
+    exit 0
+fi
+
+# Question 2
+CLUSTER_INSTALL=$(ask_yes_no "Is this a cluster installation?" "y")
+if [[ "$CLUSTER_INSTALL" == "n" ]]; then
+    SS_INSTALL="y"
+    echo "Single server installation script coming soon."
+fi
+
+# Internal IP address
+LOCAL_IP=$(hostname -I | awk '{print $1}')
+EXTERNAL_IP=$(curl -s checkip.amazonaws.com)
+echo "The Internal IP address found was $LOCAL_IP."
+USE_IP=$(ask_yes_no "Do you want to use this IP address for this server?" "y")
+if [[ $USE_IP == "n" || $USE_IP == "N" ]]; then
+    read -p "Please enter the IP address for this server: " LOCAL_IP
+fi
+
+# Question 3
+USE_DATABASE=$(ask_yes_no "Will this server be used as the Database?" "y")
+if [[ "$USE_DATABASE" == "y" ]]; then
+    db_username=$(ask_input "DB Username" "cron")
+    db_password=$(ask_input "DB Password" "1234")
+    db_name=$(ask_input "DB Name" "asterisk")
+    db_custom_username=$(ask_input "DB Custom Username" "custom")
+    db_custom_password=$(ask_input "DB Custom Password" "custom1234")
+    db_port=$(ask_input "DB Port" "3306")
+    db_slave_user=$(ask_input "DB Slave User" "slave")
+    db_slave_pass=$(ask_input "DB Slave Pass" "slave1234")
+else
+    db_server_ip=$(ask_input "DB Server IP" "$LOCAL_IP")
+    db_username=$(ask_input "DB Username" "cron")
+    db_password=$(ask_input "DB Password" "1234")
+    db_name=$(ask_input "DB Name" "asterisk")
+    db_custom_username=$(ask_input "DB Custom Username" "custom")
+    db_custom_password=$(ask_input "DB Custom Password" "custom1234")
+    db_port=$(ask_input "DB Port" "3306")
+    db_slave_user=$(ask_input "DB Slave User" "slave")
+    db_slave_pass=$(ask_input "DB Slave Pass" "slave1234")
+fi
+
+# Question 4
+USE_WEB=$(ask_yes_no "Will this server be used as a Web server?" "y")
+
+# Question 5
+USE_TELEPHONY=$(ask_yes_no "Will this server be used as a Telephony server?" "y")
+if [[ $USE_TELEPHONY == "y" ]]; then
+        FIRST_TELEPHONY=$(ask_yes_no "Is this your Telephony server?" "y")
+fi
+
+# Question 6
+USE_ARCHIVE=$(ask_yes_no "Will this server be used as an Archive server?" "y")
+
+# Question 7
+USE_TDGUI=$(ask_yes_no "Will this server use the TOP DIALER GUI?" "n")
+
+if [[ $USE_TELEPHONY == "y" || $USE_WEB == "y" ]]; then
+        domain_name=$(ask_input "Please set your Domain Name" "xxxx.xxxxxx.xxx")
+        admin_email=$(ask_input "Domain Admin Email Address" "certs@topit.solutions")
+fi
+
+SERVER_ID=$(ask_input "Please set an ID for your server:(No space or special char)" "topd")
+
+SERVER_DESC=$(ask_input "Please set a Description for your server" "top test")
+
+# Print summary
+echo -e "\nInstallation Summary:"
+echo "Cluster installation: $CLUSTER_INSTALL"
+echo "Server IP: $LOCAL_IP"
+echo "External Server IP: $EXTERNAL_IP"
+echo "Used as Database: $USE_DATABASE"
+if [[ "$USE_DATABASE" == "y" ]]; then
+    echo "DB Username: $db_username"
+    echo "DB Password: $db_password"
+    echo "DB Name: $db_name"
+    echo "DB Custom Username: $db_custom_username"
+    echo "DB Custom Password: $db_custom_password"
+    echo "DB Port: $db_port"
+    echo "DB Slave User: $db_slave_user"
+    echo "DB Slave Pass: $db_slave_pass"
+else
+    echo "DB Server IP: $db_server_ip"
+    echo "DB Username: $db_username"
+    echo "DB Password: $db_password"
+    echo "DB Custom Username: $db_custom_username"
+    echo "DB Custom Password: $db_custom_password"
+    echo "DB Port: $db_port"
+    echo "DB Slave User: $db_slave_user"
+    echo "DB Slave Pass: $db_slave_pass"
+fi
+echo "Used as Web server: $USE_WEB"
+echo "Used as Telephony server: $USE_TELEPHONY"
+echo "First Telephony server: $FIRST_TELEPHONY"
+echo "Used as Archive server: $USE_ARCHIVE"
+echo "Used as TOP DIALER GUI: $USE_TDGUI"
+echo "Your Server ID: $SERVER_ID"
+echo "Your Server Description: $SERVER_DESC"
+
+# Ask if the user wants to continue
+CONTINUE_INSTALL_FINAL=$(ask_yes_no "Do you want to continue with the installation?" "y")
+if [[ "$CONTINUE_INSTALL_FINAL" == "y" ]]; then
+    echo "Installation started, sit tight."
+sleep 5
+fi
