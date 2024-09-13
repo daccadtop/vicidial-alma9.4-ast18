@@ -449,6 +449,8 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         sed "s/10.10.10.15/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/first_server_install.sql > /usr/src/topdialer/firstserver.sql
         sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/firstserver.sql
         sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/firstserver.sql
+        echo "" >> /usr/src/topdialer/firstserver.sql && cat /usr/src/topdialer/confbridges.sql >> /usr/src/topdialer/firstserver.sql 
+        sed "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/firstserver.sql
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/firstserver.sql
@@ -464,6 +466,8 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         sed "s/10.10.10.16/$LOCAL_IP/g" /usr/src/astguiclient/trunk/extras/second_server_install.sql > /usr/src/topdialer/secondserver.sql
         sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/secondserver.sql
         sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/secondserver.sql
+        echo "" >> /usr/src/topdialer/secondserver.sql && cat /usr/src/topdialer/confbridges.sql >> /usr/src/topdialer/secondserver.sql
+        sed "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/secondserver.sql
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/secondserver.sql
@@ -735,8 +739,23 @@ chmod 777 /var/spool/asterisk/monitorDONE
 chkconfig asterisk off
 
 ##ConfBridge Setup
+if [ "$USE_TELEPHONY" == "y" ]; then
 ##./vicidial-enable-confbridge.sh
+cd /usr/src/topdialer
+cp /etc/asterisk/extensions.conf /etc/asterisk/extensions.bk
+awk '/include => vicidial-auto/ {print; system("cat /usr/src/topdialer/confbridge_ext.conf"); next} 1' /etc/asterisk/extensions.conf > /etc/asterisk/TempFile && mv -f /etc/asterisk/TempFile /etc/asterisk/extensions.conf
+mv -f confbridge-vicidial.conf /etc/asterisk/
 
+tee -a /etc/asterisk/confbridge.conf <<EOF
+
+#include confbridge-vicidial.conf
+EOF
+tee -a /etc/asterisk/modules.conf <<EOF
+
+noload => res_timing_timerfd.so
+noload => res_timing_kqueue.so
+noload => res_timing_pthread.so
+EOF
 tee -a /etc/asterisk/manager.conf <<EOF
 
 [confcron]
@@ -747,6 +766,7 @@ write = command,reporting
 eventfilter=Event: Meetme
 eventfilter=Event: Confbridge
 EOF
+fi
 
 chmod -R 777 /var/spool/asterisk/monitorDONE
 chown -R apache:apache /var/spool/asterisk/monitorDONE
