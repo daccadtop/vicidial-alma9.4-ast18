@@ -452,7 +452,7 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/firstserver.sql
         sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/firstserver.sql
         echo "" >> /usr/src/topdialer/firstserver.sql && cat /usr/src/topdialer/confbridges.sql >> /usr/src/topdialer/firstserver.sql 
-        sed "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/firstserver.sql
+        sed -i "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/firstserver.sql
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/firstserver.sql
@@ -469,7 +469,7 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         sed -i "s/TESTast/$SERVER_ID/g" /usr/src/topdialer/secondserver.sql
         sed -i "s/Test install of Asterisk server/$SERVER_DESC/g" /usr/src/topdialer/secondserver.sql
         echo "" >> /usr/src/topdialer/secondserver.sql && cat /usr/src/topdialer/confbridges.sql >> /usr/src/topdialer/secondserver.sql
-        sed "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/secondserver.sql
+        sed -i "s/10.10.10.17/$LOCAL_IP/g" /usr/src/topdialer/secondserver.sql
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/secondserver.sql
