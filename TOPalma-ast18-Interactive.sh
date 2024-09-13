@@ -48,6 +48,7 @@ fi
 
 # Internal IP address
 LOCAL_IP=$(hostname -I | awk '{print $1}')
+EXTERNAL_IP=$(curl -s checkip.amazonaws.com)
 echo "The Internal IP address found was $LOCAL_IP."
 USE_IP=$(ask_yes_no "Do you want to use this IP address for this server?" "y")
 if [[ $USE_IP == "n" || $USE_IP == "N" ]]; then
@@ -105,6 +106,7 @@ SERVER_DESC=$(ask_input "Please set a Description for your server" "top test")
 echo -e "\nInstallation Summary:"
 echo "Cluster installation: $CLUSTER_INSTALL"
 echo "Server IP: $LOCAL_IP"
+echo "External Server IP: $EXTERNAL_IP"
 echo "Used as Database: $USE_DATABASE"
 if [[ "$USE_DATABASE" == "y" ]]; then
     echo "DB Username: $db_username"
@@ -454,12 +456,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     else
@@ -471,12 +473,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     fi
