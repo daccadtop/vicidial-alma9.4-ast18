@@ -445,7 +445,7 @@ sed -i s/CPASS/"$db_custom_password"/g /etc/astguiclient.conf
 sed -i s/DBPORT/"$db_port"/g /etc/astguiclient.conf
 
 echo "Install VICIDIAL"
-read -p 'Press Enter to continue: '
+read -p 'Press Enter to install VICIDIAL: '
 cd /usr/src/astguiclient/trunk
 perl install.pl --no-prompt --copy_sample_conf_files=Y
 
