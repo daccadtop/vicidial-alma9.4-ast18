@@ -142,7 +142,8 @@ if [[ "$CONTINUE_INSTALL_FINAL" == "y" ]]; then
 sleep 5
 
 export LC_ALL=C
-
+sudo systemctl restart chronyd
+sudo chronyc -a makestep
 yum groupinstall "Development Tools" -y
 
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
@@ -205,7 +206,9 @@ yum in -y libedit-devel uuid* libxml2* speex-devel speex* postfix dovecot s-nail
 dnf install -y mariadb-server mariadb
 
 dnf -y install dnf-plugins-core
-dnf config-manager --set-enabled powertools
+#dnf config-manager --set-enabled powertools
+#powertools repository was renamed by crb(CodeReady Builder) in AlmaLinux9
+dnf config-manager --set-enabled crb
 
 systemctl enable mariadb
 
