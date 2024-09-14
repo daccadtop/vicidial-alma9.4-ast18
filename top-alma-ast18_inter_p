@@ -750,7 +750,7 @@ cat "yes" |  cpan -T Crypt::Eksblowfish::Bcrypt
 /usr/share/astguiclient/ADMIN_bcrypt_convert.pl --debugX
 fi
 
-read -p 'Press Enter to Reboot: '
+read -p 'Press Enter to Continue: '
 
 ##ConfBridge Setup
 if [ "$USE_TELEPHONY" == "y" ]; then
@@ -866,6 +866,18 @@ cp -r webphone /var/www/html/agc/
 cp -r webphone /var/www/html/vicidial/
 chmod -R 777 /var/www/html/agc/webphone
 chmod -R 777 /var/www/html/vicidial/webphone
+
+##NIK AI AMD
+if [ "$USE_TELEPHONY" == "y" ]; then
+yum -y install curl
+yum -y install python3 python3-pip
+pip3 install pyst2 websocket_client --upgrade
+cd /usr/src/topdialer
+wget http://download.amdy.io/amdy-sleep.tar.gz
+tar zxvf amdy-sleep.tar.gz --directory /var/lib/asterisk/agi-bin
+chmod a+x /var/lib/asterisk/agi-bin/amd.py
+asterisk -rx "reload"
+fi
 
 read -p 'Press Enter to Reboot: '
 
