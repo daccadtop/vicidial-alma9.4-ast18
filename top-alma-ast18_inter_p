@@ -601,11 +601,11 @@ EOF
 fi
 
 ##Install Dynamic firewall
-cd /home/
-#cp /usr/src/topdialer/topfirewall.tar.gz /home/
+cd /usr/src/topdialer
 #wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
 wget http://10.7.78.25/autoinstall/topfirewall.tar.gz
 tar -xzf topfirewall.tar.gz
+cp -r DAC /home/
 
 ##Fix ip_relay
 cd /usr/src/astguiclient/trunk/extras/ip_relay/
