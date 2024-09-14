@@ -307,8 +307,10 @@ modprobe dahdi_dummy
 /usr/sbin/dahdi_cfg -vvvvvvvvvvvvv
 
 systemctl enable dahdi
-service dahdi start
-service dahdi status
+#service dahdi start
+#service dahdi status
+systemctl start dahdi
+systemctl status dahdi
 
 read -p 'Press Enter to continue: '
 
@@ -439,6 +441,13 @@ else
         fi
     fi
 fi
+sed -i s/SERVERIP/"$LOCAL_IP"/g /etc/astguiclient.conf
+sed -i s/DBNAME/"$db_name"/g /etc/astguiclient.conf
+sed -i s/DBUSER/"$db_username"/g /etc/astguiclient.conf
+sed -i s/DBPASS/"$db_password"/g /etc/astguiclient.conf
+sed -i s/CUSER/"$db_custom_username"/g /etc/astguiclient.conf
+sed -i s/CPASS/"$db_custom_password"/g /etc/astguiclient.conf
+sed -i s/DBPORT/"$db_port"/g /etc/astguiclient.conf
 
 echo "Install VICIDIAL"
 cd /usr/src/astguiclient/trunk
