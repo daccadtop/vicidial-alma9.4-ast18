@@ -418,7 +418,7 @@ echo "Replace Default parameters"
 if [[ "$USE_DATABASE" == "y" ]]; then    
     sed -i s/MAINDBIP/localhost/g /etc/astguiclient.conf
     if [[ "$USE_TELEPHONY" == "y" ]]; then
-        sed -i s/SKEEPALIVES/123456789EC/g /etc/astguiclient.conf
+        sed -i s/SKEEPALIVES/12345689EC/g /etc/astguiclient.conf
     else
         sed -i s/SKEEPALIVES/89EC/g /etc/astguiclient.conf
     fi
@@ -506,19 +506,24 @@ fi
 perl /usr/src/astguiclient/trunk/install.pl --no-prompt
 
 #Install Crontab
-if [[ "$USE_DATABASE" == "y" || "$USE_TELEPHONY" == "y" ]]; then
 cd /usr/src/topdialer
 #wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
 wget http://10.7.78.25/autoinstall/crons.tar.gz
 tar -xzf crons.tar.gz
 touch /root/crontab-file
-cat allcron > /root/crontab-file
+
+if [[ "$USE_DATABASE" == "y" || "$USE_TELEPHONY" == "y" ]]; then
+    cat allcron > /root/crontab-file
 fi
 if [[ "$USE_DATABASE" == "y" ]]; then
-cat dbcron >> /root/crontab-file
+    cat dbcron >> /root/crontab-file
 fi
 if [[ "$USE_TELEPHONY" == "y" ]]; then
-cat dialcron >> /root/crontab-file
+    cat dialcron >> /root/crontab-file
+else
+    if [[ "$USE_WEB" == "y" ]]; then
+        cat webcron >> /root/crontab-file
+    fi
 fi
 
 crontab /root/crontab-file
@@ -744,6 +749,8 @@ cat "yes" |  cpan -T Crypt::Eksblowfish::Bcrypt
 /usr/share/astguiclient/ADMIN_bcrypt_convert.pl --debugX
 fi
 
+read -p 'Press Enter to Reboot: '
+
 ##ConfBridge Setup
 if [ "$USE_TELEPHONY" == "y" ]; then
 ##./vicidial-enable-confbridge.sh
@@ -847,6 +854,17 @@ read -p 'If you had any issues during the certificate process please make sure i
 echo "Reloading apache"
 systemctl restart httpd
 fi
+
+##TOP WEBPHONE
+cd /usr/src/topdialer
+#wget https://topt.topdialer.solutions:8080/autoinstall/topwebphone.tar.gz
+wget http://10.7.78.25/autoinstall/topwebphone.tar.gz
+tar -xzf topwebphone.tar.gz
+mv -f /var/www/html/agc/webphone /var/www/html/agc/BKwebphone
+cp -r webphone /var/www/html/agc/
+cp -r webphone /var/www/html/vicidial/
+chmod -R 777 /var/www/html/agc/webphone
+chmod -R 777 /var/www/html/vicidial/webphone
 
 read -p 'Press Enter to Reboot: '
 
