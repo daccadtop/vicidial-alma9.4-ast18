@@ -281,7 +281,8 @@ cp /usr/src/topdialer/newt.h /etc/include/
 cd /usr/src/
 mkdir dahdi-linux-complete-3.4.0+3.4.0
 cd dahdi-linux-complete-3.4.0+3.4.0
-wget http://10.7.78.25/autoinstall/dahdi-alma9-4.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/dahdi-alma9-4.tar.gz
+#wget http://10.7.78.25/autoinstall/dahdi-alma9-4.tar.gz
 tar -xzf dahdi-alma9-4.tar.gz
 yum in newt* -y
 
