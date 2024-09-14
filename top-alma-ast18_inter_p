@@ -742,7 +742,9 @@ sudo systemctl enable rc-local.service
 sudo systemctl start rc-local.service
 
 chmod 775 /var/spool/asterisk/
+if [ "$USE_TELEPHONY" != "y" ]; then
 chkconfig asterisk off
+fi
 
 ##Password Encryption
 if [ "$USE_DATABASE" == "y" ]; then
