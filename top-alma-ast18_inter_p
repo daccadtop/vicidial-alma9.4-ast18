@@ -206,8 +206,6 @@ dnf install -y mariadb-server mariadb
 
 dnf -y install dnf-plugins-core
 #dnf config-manager --set-enabled powertools
-#powertools repository was renamed by crb(CodeReady Builder) in AlmaLinux9
-dnf config-manager --set-enabled crb
 
 systemctl enable mariadb
 
