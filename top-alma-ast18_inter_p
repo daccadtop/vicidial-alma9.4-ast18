@@ -475,12 +475,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', vicidial_balance_active='Y', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/firstserver.sql
-              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', vicidial_balance_active='Y', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     else
@@ -492,12 +492,12 @@ if [[ "$USE_TELEPHONY" == "y" ]]; then
         if [[ "$USE_DATABASE" == "y" ]]; then
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', vicidial_balance_active='Y', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -u "$db_username" -p"$db_password" -D "$db_name"
         else
             {
               cat /usr/src/topdialer/secondserver.sql
-              echo "UPDATE servers SET asterisk_version='16.30.0', max_vicidial_trunks='200', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
+              echo "UPDATE servers SET asterisk_version='18.18.1', max_vicidial_trunks='200', vicidial_balance_active='Y', external_server_ip='$EXTERNAL_IP', conf_engine='CONFBRIDGE' WHERE server_id='$SERVER_ID';"
             } | mysql -h "$db_server_ip" -u "$db_username" -p"$db_password" -D "$db_name"
         fi
     fi
