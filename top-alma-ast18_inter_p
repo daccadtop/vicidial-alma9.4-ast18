@@ -84,7 +84,7 @@ USE_WEB=$(ask_yes_no "Will this server be used as a Web server?" "y")
 # Question 5
 USE_TELEPHONY=$(ask_yes_no "Will this server be used as a Telephony server?" "y")
 if [[ $USE_TELEPHONY == "y" ]]; then
-        FIRST_TELEPHONY=$(ask_yes_no "Is this your Telephony server?" "y")
+        FIRST_TELEPHONY=$(ask_yes_no "Is this your first Telephony server?" "y")
 fi
 
 # Question 6
