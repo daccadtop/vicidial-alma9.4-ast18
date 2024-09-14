@@ -212,8 +212,8 @@ systemctl enable mariadb
 cp /etc/my.cnf /etc/my.cnf.original
 echo "" > /etc/my.cnf
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/mysqlconf.tar.gz
-wget http://10.7.78.25/autoinstall/mysqlconf.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/mysqlconf.tar.gz
+#wget http://10.7.78.25/autoinstall/mysqlconf.tar.gz
 tar -xzf mysqlconf.tar.gz
 cat my.cnf > /etc/my.cnf
 
@@ -409,8 +409,8 @@ fi
 
 #Get astguiclient.conf file
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/astgui.tar.gz
-wget http://10.7.78.25/autoinstall/astgui.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/astgui.tar.gz
+#wget http://10.7.78.25/autoinstall/astgui.tar.gz
 tar -xzf astgui.tar.gz
 cp astguiclient.conf /etc/astguiclient.conf
 
@@ -508,8 +508,8 @@ perl /usr/src/astguiclient/trunk/install.pl --no-prompt
 
 #Install Crontab
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
-wget http://10.7.78.25/autoinstall/crons.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/crons.tar.gz
+#wget http://10.7.78.25/autoinstall/crons.tar.gz
 tar -xzf crons.tar.gz
 touch /root/crontab-file
 
@@ -533,8 +533,8 @@ crontab -l
 #Install rc.local
 sudo sed -i 's|exit 0|### exit 0|g' /etc/rc.d/rc.local
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/rclocal.tar.gz
-wget http://10.7.78.25/autoinstall/rclocal.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/rclocal.tar.gz
+#wget http://10.7.78.25/autoinstall/rclocal.tar.gz
 tar -xzf rclocal.tar.gz
 cat rc.local >> /etc/rc.d/rc.local
 
@@ -569,8 +569,8 @@ if [[ "$USE_TDGUI" == "y" ]]; then
 cd /var/www/html
 mv favicon.ico faviconBK.icoBK
 mv index.html index.BKhtml
-#wget https://topt.topdialer.solutions:8080/autoinstall/topdialergui.tar.gz
-wget http://10.7.78.25/autoinstall/topdialergui.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/topdialergui.tar.gz
+#wget http://10.7.78.25/autoinstall/topdialergui.tar.gz
 #cp /usr/src/topdialer/topdialergui.tar.gz /var/www/html/
 tar -xzf topdialergui.tar.gz
 chmod -R 744 admin agents auth dashboard favicon.ico index.html p_login_logo.png suspended.html
@@ -602,8 +602,8 @@ fi
 
 ##Install Dynamic firewall
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
-wget http://10.7.78.25/autoinstall/topfirewall.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/topfirewall.tar.gz
+#wget http://10.7.78.25/autoinstall/topfirewall.tar.gz
 tar -xzf topfirewall.tar.gz
 cp -r DAC /home/
 
@@ -813,8 +813,8 @@ fi
 if [[ "$USE_WEB" == "y" || "$USE_TELEPHONY" == "y" ]]; then
 echo "Install certbot for LetsEncrypt"
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/webrtc.tar.gz
-wget http://10.7.78.25/autoinstall/webrtc.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/webrtc.tar.gz
+#wget http://10.7.78.25/autoinstall/webrtc.tar.gz
 tar -xzf webrtc.tar.gz
 
 cp DOMAINNAME.conf /etc/httpd/conf.d/$domain_name.conf
@@ -858,8 +858,8 @@ fi
 
 ##TOP WEBPHONE
 cd /usr/src/topdialer
-#wget https://topt.topdialer.solutions:8080/autoinstall/topwebphone.tar.gz
-wget http://10.7.78.25/autoinstall/topwebphone.tar.gz
+wget https://topt.topdialer.solutions:8080/autoinstall/topwebphone.tar.gz
+#wget http://10.7.78.25/autoinstall/topwebphone.tar.gz
 tar -xzf topwebphone.tar.gz
 mv -f /var/www/html/agc/webphone /var/www/html/agc/BKwebphone
 cp -r webphone /var/www/html/agc/
@@ -889,18 +889,3 @@ else
     echo "Installation aborted."
     exit 0
 fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
