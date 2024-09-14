@@ -139,11 +139,11 @@ echo "Your Server Description: $SERVER_DESC"
 CONTINUE_INSTALL_FINAL=$(ask_yes_no "Do you want to continue with the installation?" "y")
 if [[ "$CONTINUE_INSTALL_FINAL" == "y" ]]; then
     echo "Installation started, sit tight."
+sudo systemctl restart chronyd
+sudo chronyc -a makestep
 sleep 5
 
 export LC_ALL=C
-sudo systemctl restart chronyd
-sudo chronyc -a makestep
 yum groupinstall "Development Tools" -y
 
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
